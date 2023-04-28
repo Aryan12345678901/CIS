@@ -1,0 +1,21 @@
+def vectorize_text(data):
+    vectorizer = TfidfVectorizer(stop_words='english')
+    vectors = vectorizer.fit_transform(data)
+    return vectors
+movies['overview_vectors'] = vectorize_text(movies['overview'])
+movies['genres_vectors'] = vectorize_text(movies['genres'].apply(lambda x: ' '.join(x)))
+movies['keywords_vectors'] = vectorize_text(movies['keywords'].apply(lambda x: ' '.join(x)))
+
+# Define a function to find the most similar movies
+def find_similar_movies(movie_title, n=5):
+    # Get the index of the movie with the given title
+    idx = movies[movies['title'] == movie_title].index[0]
+    
+    # Compute the cosine similarity between the vectors of the given movie and all the other movies
+    similarity = cosine_similarity(movies.loc[idx, ['overview_vectors', 'genres_vectors', 'keywords_vectors',]].values.reshape(1, -1), movies[['overview_vectors', 'genres_vectors', 'keywords_vectors', 'cast_vectors', 'crew_vectors']])
+    
+    # Get the indices of the top n most similar movies
+    top_n = similarity.argsort()[0][::-1][1:n+1]
+    
+    # Return the titles of the top n most similar movies
+    return movies.loc[top_n, 'title'].values
